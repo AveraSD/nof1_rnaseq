@@ -34,11 +34,64 @@ diff <- function(tumorType, vsdRefMat, df) {
     #resultsNames(dds)
     res1 <- results(dds, contrast=c("condition", "PATIENT", "NORMAL"), pAdjustMethod='bonferroni', alpha=0.05)
     res2 <- results(dds, contrast=c("condition", "PATIENT", "MNORMAL"), pAdjustMethod='bonferroni', alpha=0.05)
+    return(list(res1=res1, res2=res2, selNormal=selNormal, selMNormal=selMNormal, selTumor=selTumor, dds=dds))
   }
   
   #OV
   if(tumorType=='OV') {
+    # randomly select 10 samples from the reference per type to compare the patient sample to
+    set.seed(12345)
+    selNormal <- reference$reference_raw_count[,reference$group=='NORMAL'][,sample(1:length(which(as.vector(reference$group)=='NORMAL')), 10)]
+    selTumor <- reference$reference_raw_count[,reference$group=='TUMOR'][,sample(1:length(which(as.vector(reference$group)=='TUMOR')), 10)]
     
+    dds <- DESeqDataSetFromMatrix(countData = cbind(df[,1],
+                                                    selNormal,
+                                                    selTumor
+    ),
+    colData = data.frame(condition=rep(c('PATIENT', 'NORMAL', 'TUMOR'), 
+                                       c(1,
+                                         dim(selNormal)[2],
+                                         dim(selTumor)[2]
+                                       ))),
+    design = ~ condition
+    )
+    sizeFactors(dds) <- c(reference$reference_sf[colnames(selNormal)],
+                          reference$reference_sf[colnames(selTumor)],
+                          sfPatient)
+    dds <- estimateDispersions(dds)
+    dds <- nbinomWaldTest(dds)
+    #resultsNames(dds)
+    res1 <- results(dds, contrast=c("condition", "PATIENT", "NORMAL"), pAdjustMethod='bonferroni', alpha=0.05)
+    return(list(res1=res1, res2=NULL, selNormal=selNormal, selMNormal=NULL, selTumor=selTumor, dds=dds))    
+  }
+
+  # FALLOPIAN
+  if(tumorType=='FALLOPIAN') {
+    # randomly select 6 samples from the reference per type to compare the patient sample to
+    # >> only 6 samples total available..
+    set.seed(12345)
+    selNormal <- reference$reference_raw_count[,reference$group=='FALLOPIAN'][,sample(1:length(which(as.vector(reference$group)=='FALLOPIAN')), 6)]
+    selTumor <- reference$reference_raw_count[,reference$group=='TUMOR'][,sample(1:length(which(as.vector(reference$group)=='TUMOR')), 6)]
+    
+    dds <- DESeqDataSetFromMatrix(countData = cbind(df[,1],
+                                                    selNormal,
+                                                    selTumor
+    ),
+    colData = data.frame(condition=rep(c('PATIENT', 'NORMAL', 'TUMOR'), 
+                                       c(1,
+                                         dim(selNormal)[2],
+                                         dim(selTumor)[2]
+                                       ))),
+    design = ~ condition
+    )
+    sizeFactors(dds) <- c(reference$reference_sf[colnames(selNormal)],
+                          reference$reference_sf[colnames(selTumor)],
+                          sfPatient)
+    dds <- estimateDispersions(dds)
+    dds <- nbinomWaldTest(dds)
+    #resultsNames(dds)
+    res1 <- results(dds, contrast=c("condition", "PATIENT", "NORMAL"), pAdjustMethod='bonferroni', alpha=0.05)
+    return(list(res1=res1, res2=NULL, selNormal=selNormal, selMNormal=NULL, selTumor=selTumor, dds=dds))
   }
   
   # LAML
@@ -66,8 +119,7 @@ diff <- function(tumorType, vsdRefMat, df) {
     dds <- nbinomWaldTest(dds)
     #resultsNames(dds)
     res1 <- results(dds, contrast=c("condition", "PATIENT", "NORMAL"), pAdjustMethod='bonferroni', alpha=0.05)
+    return(list(res1=res1, res2=NULL, selNormal=selNormal, selMNormal=NULL, selTumor=selTumor, dds=dds))
   }
-  
-  return(list(res1=res1, selNormal=selNormal, selTumor=selTumor, dds=dds))
 }
 

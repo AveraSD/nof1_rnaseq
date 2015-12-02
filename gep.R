@@ -34,7 +34,8 @@ if(dir.exists(outDir)) {
 # load the reference cohort
 ################################################################################
 source('src/loadRef.R')
-allTumorTypes <- c('BRCA', 'OV', 'LAML')
+allTumorTypes <- c('BRCA', 'OV', 'LAML',
+                   'FALLOPIAN')
 if (tumorType %in% allTumorTypes) {
   loadRef(tumorType, refPath)
 } else {
