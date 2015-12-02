@@ -34,9 +34,9 @@ if(dir.exists(outDir)) {
 # load the reference cohort
 ################################################################################
 source('src/loadRef.R')
-allTumorTypes <- c('BRCA', 'OV')
+allTumorTypes <- c('BRCA', 'OV', 'LAML')
 if (tumorType %in% allTumorTypes) {
-  loadRef(tumorType)
+  loadRef(tumorType, refPath)
 } else {
   print('Tumor Type is not supported')
   stop()
@@ -59,13 +59,14 @@ diffExpr <- diff(tumorType, vsdRefMat, df)
 res1x <- as.data.frame(diffExpr$res1)
 res1x <- cbind(id=rownames(res1x), res1x) #,@call=patientREC$Pcalls)
 res1Sig <- arrange(res1x[which(res1x$padj < 0.05), ], padj)
-
-res2x <- as.data.frame(diffExpr$res2)
-res2x <- cbind(id=rownames(res2x), res2x) #,@call=patientREC$Pcalls)
-res2Sig <- arrange(res2x[which(res2x$padj < 0.05), ], padj)
-
 write.table(res1Sig, paste0(outDir, 'patient_vs_normal.csv'), sep='\t', row.names = FALSE)
-write.table(res2Sig, paste0(outDir, 'patient_vs_mnormal.csv'), sep='\t', row.names = FALSE)
+
+if(any(reference$group=='MNORMAL')) {
+  res2x <- as.data.frame(diffExpr$res2)
+  res2x <- cbind(id=rownames(res2x), res2x) #,@call=patientREC$Pcalls)
+  res2Sig <- arrange(res2x[which(res2x$padj < 0.05), ], padj)
+  write.table(res2Sig, paste0(outDir, 'patient_vs_mnormal.csv'), sep='\t', row.names = FALSE)  
+}
 
 ################################################################################
 # viz
@@ -73,23 +74,36 @@ write.table(res2Sig, paste0(outDir, 'patient_vs_mnormal.csv'), sep='\t', row.nam
 source('src/viz.R')
 palette(rainbow(4))
 
-pdf(paste0(outDir, 'qc.pdf'))
-# add sample to reference
-sRef <- samleToRef(df, 
-                   reference, 
-                   loggeomeansRef, 
-                   vsdRefMat, 
-                   diffExpr$selNormal, 
-                   diffExpr$selMNormal, 
-                   diffExpr$selTumor
-                   )
+if(any(reference$group=='MNORMAL')) {
+  pdf(paste0(outDir, 'qc.pdf'))
+  # add sample to reference
+  sRef <- samleToRef(df, 
+                     reference, 
+                     loggeomeansRef, 
+                     vsdRefMat, 
+                     diffExpr$selNormal, 
+                     diffExpr$selMNormal, 
+                     diffExpr$selTumor
+  )
+} else {
+  pdf(paste0(outDir, 'qc.pdf'))
+  # add sample to reference
+  sRef <- samleToRef(df, 
+                     reference, 
+                     loggeomeansRef, 
+                     vsdRefMat, 
+                     diffExpr$selNormal, 
+                     NULL,
+                     diffExpr$selTumor
+  )
+}  
 
 ## library size
 my.libplot(diffExpr$dds, col=factor(sRef$des), legend=sRef$des)
-
+  
 ## transformed data, boxplot
 my.vsdplot(sRef$vsdMat, col=factor(sRef$des), sRef$des)
-
+  
 ## relative log expression
 plotRLE(sRef$vsdMat, 
         col=factor(sRef$des), 
@@ -100,12 +114,15 @@ plotRLE(sRef$vsdMat,
         cex.axis=1, 
         cex.lab=1,
         names=sRef$des
-        )
-
+)
+  
 ## pca
 my.pca(sRef$vsdMat, sRef$des)
-
+  
 ## sample-to-sample dist
 my.ssDist(sRef$vsdMat, sRef$des)
 dev.off()
+
+
+
 

@@ -7,7 +7,7 @@ addNewSampleDESeq <- function(x, loggeomeansRef) {
 }
 
 # add sample to reference (vst transformation)
-samleToRef <- function(df, reference, loggeomeansRef, vsdRefMat, selNormal, selMNormal, selTumor) {
+samleToRef <- function(df, reference, loggeomeansRef, vsdRefMat, selNormal, selMNormal=NULL, selTumor) {
   colData <- data.frame(condition='PATIENT')
   ddsPatient <- DESeqDataSetFromMatrix(df, colData, formula(~ 1))
   sfPatient <- addNewSampleDESeq(df[,1], loggeomeansRef)$sf
@@ -16,8 +16,13 @@ samleToRef <- function(df, reference, loggeomeansRef, vsdRefMat, selNormal, selM
   vsdPatient <- varianceStabilizingTransformation(ddsPatient, blind=FALSE)
   vsdPatientMat <- assay(vsdPatient)
   
-  vsdMat <- cbind(vsdPatientMat, vsdRefMat[,colnames(selNormal)], vsdRefMat[,colnames(selMNormal)], vsdRefMat[,colnames(selTumor)])
-  des <- c(rep(c('PATIENT', 'NORMAL','MNORMAL','TUMOR'), c(1, dim(selNormal)[2], dim(selMNormal)[2], dim(selTumor)[2])))
+  if(is.null(selMNormal)) {
+    vsdMat <- cbind(vsdPatientMat, vsdRefMat[,colnames(selNormal)], vsdRefMat[,colnames(selTumor)])
+    des <- c(rep(c('PATIENT', 'NORMAL', 'TUMOR'), c(1, dim(selNormal)[2], dim(selTumor)[2])))
+  } else {
+    vsdMat <- cbind(vsdPatientMat, vsdRefMat[,colnames(selNormal)], vsdRefMat[,colnames(selMNormal)], vsdRefMat[,colnames(selTumor)]) 
+    des <- c(rep(c('PATIENT', 'NORMAL','MNORMAL','TUMOR'), c(1, dim(selNormal)[2], dim(selMNormal)[2], dim(selTumor)[2])))
+  }
   
   return(list(vsdMat=vsdMat, des=des))
 }
