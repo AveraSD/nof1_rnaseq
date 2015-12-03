@@ -1,0 +1,25 @@
+Package: Nof1RNASeq
+Type: Package
+Title: Perform n-of-1 differential expression from Star-aligned RNA-Seq counts
+Version: 1.0.0
+Date: 2015-12-02
+Author: Tobias Meissner
+Maintainer: Tobias Meissner <meissner.t@googlemail.com>
+Description: Differential expression of tumor transcripts versus a cohort of
+    normal tissue expression data
+License: The MIT License (MIT)
+Depends:
+    R (>= 3.2.1),
+    DESeq2
+Imports:
+    RColorBrewer,
+    gplots,
+    edgeR,
+    dplyr,
+    SPIA,
+    graphite,
+    org.Hs.eg.db,
+    ggplot2,
+    corrplot,
+    EDASeq
+RoxygenNote: 5.0.1
